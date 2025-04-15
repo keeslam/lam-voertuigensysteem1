@@ -1,0 +1,124 @@
+{% extends 'layout.html' %}
+
+{% block title %}Rollenbeheer{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Rollenbeheer</h1>
+        <a href="{{ url_for('auth.add_role') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Nieuwe rol
+        </a>
+    </div>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Roles Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Naam</th>
+                            <th>Beschrijving</th>
+                            <th>Aantal gebruikers</th>
+                            <th>Permissies</th>
+                            <th class="text-end">Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for role in roles %}
+                            <tr>
+                                <td>
+                                    <span class="fw-bold">{{ role.name }}</span>
+                                    {% if role.name == 'admin' %}
+                                        <span class="badge bg-danger ms-2">Systeem</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ role.description }}</td>
+                                <td>{{ role.users|length }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ role.permissions|length }} permissies</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('auth.edit_role', id=role.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        
+                                        {% if role.name != 'admin' %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteRoleModal{{ role.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Delete Modal -->
+                                    <div class="modal fade" id="deleteRoleModal{{ role.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Rol verwijderen</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>
+                                                        Weet je zeker dat je de rol <strong>{{ role.name }}</strong> wilt verwijderen?
+                                                    </p>
+                                                    <p class="text-danger">
+                                                        Dit zal alle gebruikers die deze rol hebben beïnvloeden!
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                                                    <form action="{{ url_for('auth.delete_role', id=role.id) }}" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-danger">Verwijderen</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i> Geen rollen gevonden
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Active modal tracking
+    var deleteModals = document.querySelectorAll('.modal');
+    deleteModals.forEach(function(modal) {
+        modal.addEventListener('show.bs.modal', function (event) {
+            // Get data attributes or other content
+        });
+    });
+</script>
+{% endblock %}

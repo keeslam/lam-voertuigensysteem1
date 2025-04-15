@@ -1,0 +1,137 @@
+{% extends 'layout.html' %}
+
+{% block title %}Permissiebeheer{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Permissiebeheer</h1>
+        <a href="{{ url_for('auth.add_permission') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Nieuwe permissie
+        </a>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Permissions Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Naam</th>
+                            <th>Beschrijving</th>
+                            <th>Toegewezen aan rollen</th>
+                            <th class="text-end">Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for permission in permissions %}
+                            <tr>
+                                <td><strong>{{ permission.name }}</strong></td>
+                                <td>{{ permission.description }}</td>
+                                <td>
+                                    {% for role in permission.roles %}
+                                        <span class="badge bg-info">{{ role.name }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Geen</span>
+                                    {% endfor %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('auth.edit_permission', id=permission.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#deletePermissionModal{{ permission.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Delete Modal -->
+                                    <div class="modal fade" id="deletePermissionModal{{ permission.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Permissie verwijderen</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>
+                                                        Weet je zeker dat je de permissie <strong>{{ permission.name }}</strong> wilt verwijderen?
+                                                    </p>
+                                                    <p class="text-danger">
+                                                        Deze permissie zal ook worden verwijderd uit alle rollen waar deze aan is toegewezen!
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                                                    <form action="{{ url_for('auth.delete_permission', id=permission.id) }}" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-danger">Verwijderen</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i> Geen permissies gevonden
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permission Explanation -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Over permissies</h5>
+        </div>
+        <div class="card-body">
+            <p>
+                Permissies worden gebruikt om specifieke toegangsrechten te beheren. Elke permissie geeft toestemming voor een bepaalde actie of toegang tot een bepaald onderdeel van het systeem.
+            </p>
+            <p>
+                Permissies worden toegewezen aan rollen, en rollen worden toegewezen aan gebruikers. Een gebruiker kan meerdere rollen hebben, en daarmee alle bijbehorende permissies.
+            </p>
+            <h6>Standaardpermissies:</h6>
+            <ul>
+                <li><strong>view_dashboard</strong>: Toegang tot het dashboard</li>
+                <li><strong>manage_vehicles</strong>: Voertuigen toevoegen, wijzigen en verwijderen</li>
+                <li><strong>view_vehicles</strong>: Voertuigen bekijken</li>
+                <li><strong>manage_customers</strong>: Klanten toevoegen, wijzigen en verwijderen</li>
+                <li><strong>view_customers</strong>: Klanten bekijken</li>
+                <li><strong>manage_rentals</strong>: Verhuringen toevoegen, wijzigen en verwerken</li>
+                <li><strong>view_rentals</strong>: Verhuringen bekijken</li>
+                <li><strong>manage_expenses</strong>: Kosten toevoegen, wijzigen en verwijderen</li>
+                <li><strong>view_expenses</strong>: Kosten bekijken</li>
+                <li><strong>manage_documents</strong>: Documenten toevoegen en verwijderen</li>
+                <li><strong>view_documents</strong>: Documenten bekijken en downloaden</li>
+                <li><strong>view_reports</strong>: Rapporten bekijken</li>
+                <li><strong>manage_users</strong>: Gebruikers toevoegen, wijzigen en verwijderen</li>
+                <li><strong>manage_roles</strong>: Rollen en permissies beheren</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'layout.html' %}
+
+{% block title %}Voertuig Opzoeken{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="mb-4">Voertuig Opzoeken via RDW</h1>
+        <p class="lead">Zoek voertuiginformatie op basis van een Nederlands kenteken</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Kenteken opzoeken</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('lookup_vehicle') }}" method="post">
+                    <div class="mb-3">
+                        <label for="license_plate" class="form-label">Kenteken</label>
+                        <input type="text" class="form-control" id="license_plate" name="license_plate" 
+                               placeholder="Bijv. XX-123-XX" required>
+                        <div class="form-text">Voer een geldig Nederlands kenteken in (met of zonder streepjes)</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i> Zoeken
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        {% if error_message %}
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Fout</h4>
+                <p>{{ error_message }}</p>
+            </div>
+        {% endif %}
+        
+        {% if vehicle_data %}
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-car me-2"></i>Voertuiggegevens</h5>
+                </div>
+                <div class="card-body">
+                    <h4>{{ vehicle_data.make }} {{ vehicle_data.model }}</h4>
+                    <p class="text-muted">Kenteken: {{ vehicle_data.license_plate }}</p>
+                    
+                    <table class="table table-striped">
+                        <tbody>
+                            <tr>
+                                <th>Bouwjaar</th>
+                                <td>{{ vehicle_data.year }}</td>
+                            </tr>
+                            <tr>
+                                <th>Kleur</th>
+                                <td>{{ vehicle_data.color }}</td>
+                            </tr>
+                            {% if vehicle_data.fuel_type %}
+                            <tr>
+                                <th>Brandstof</th>
+                                <td>{{ vehicle_data.fuel_type }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if vehicle_data.body_type %}
+                            <tr>
+                                <th>Type</th>
+                                <td>{{ vehicle_data.body_type }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if vehicle_data.engine_capacity %}
+                            <tr>
+                                <th>Cilinderinhoud</th>
+                                <td>{{ vehicle_data.engine_capacity }} cc</td>
+                            </tr>
+                            {% endif %}
+                            {% if vehicle_data.number_of_seats %}
+                            <tr>
+                                <th>Aantal zitplaatsen</th>
+                                <td>{{ vehicle_data.number_of_seats }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if vehicle_data.weight %}
+                            <tr>
+                                <th>Gewicht</th>
+                                <td>{{ vehicle_data.weight }} kg</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    
+                    <form action="{{ url_for('add_vehicle_from_rdw') }}" method="post">
+                        <input type="hidden" name="make" value="{{ vehicle_data.make }}">
+                        <input type="hidden" name="model" value="{{ vehicle_data.model }}">
+                        <input type="hidden" name="year" value="{{ vehicle_data.year }}">
+                        <input type="hidden" name="license_plate" value="{{ vehicle_data.license_plate }}">
+                        <input type="hidden" name="color" value="{{ vehicle_data.color }}">
+                        
+                        <div class="mb-3">
+                            <label for="daily_rate" class="form-label">Dagprijs (€)</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="daily_rate" name="daily_rate" 
+                                   required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="available" selected>Beschikbaar</option>
+                                <option value="maintenance">Onderhoud</option>
+                                <option value="rented">Verhuurd</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="mileage" class="form-label">Kilometerstand</label>
+                            <input type="number" min="0" class="form-control" id="mileage" name="mileage" 
+                                   value="0" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus-circle me-1"></i> Toevoegen aan vloot
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

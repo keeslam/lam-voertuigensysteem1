@@ -1,0 +1,211 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {% if user %}
+        Gebruiker bewerken
+    {% else %}
+        Nieuwe gebruiker
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            {% if user %}
+                Gebruiker bewerken
+            {% else %}
+                Nieuwe gebruiker
+            {% endif %}
+        </h1>
+        <a href="{{ url_for('auth.users') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Terug naar gebruikers
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                <!-- Basic Info -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="username" class="form-label">Gebruikersnaam*</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="username" 
+                               name="username" 
+                               value="{{ user.username if user else '' }}"
+                               required
+                               {% if user and user.username == 'admin' %}readonly{% endif %}>
+                        <div class="invalid-feedback">Gebruikersnaam is verplicht</div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label">Email*</label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               name="email" 
+                               value="{{ user.email if user else '' }}"
+                               required>
+                        <div class="invalid-feedback">Geldig emailadres is verplicht</div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="first_name" class="form-label">Voornaam</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="first_name" 
+                               name="first_name" 
+                               value="{{ user.first_name if user else '' }}">
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="last_name" class="form-label">Achternaam</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="last_name" 
+                               name="last_name" 
+                               value="{{ user.last_name if user else '' }}">
+                    </div>
+                </div>
+
+                <!-- Password fields - new password only required for new users -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">
+                            Wachtwoord{% if not user %}*{% endif %}
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               name="password"
+                               {% if not user %}required{% endif %}>
+                        <div class="form-text">
+                            {% if user %}
+                                Laat leeg om het huidige wachtwoord te behouden
+                            {% else %}
+                                Minimaal 8 tekens
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="password_confirm" class="form-label">
+                            Bevestig wachtwoord{% if not user %}*{% endif %}
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password_confirm" 
+                               name="password_confirm"
+                               {% if not user %}required{% endif %}>
+                        <div class="invalid-feedback">Wachtwoorden moeten overeenkomen</div>
+                    </div>
+                </div>
+                
+                <!-- Account status -->
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" 
+                           type="checkbox" 
+                           id="is_active" 
+                           name="is_active" 
+                           {% if not user or user.is_active %}checked{% endif %}
+                           {% if user and user.username == 'admin' %}disabled{% endif %}>
+                    <label class="form-check-label" for="is_active">Account actief</label>
+                </div>
+                
+                <!-- Role selection -->
+                <div class="mb-4">
+                    <label class="form-label">Rollen</label>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                {% for role in roles %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               name="roles" 
+                                               value="{{ role.id }}" 
+                                               id="role_{{ role.id }}"
+                                               {% if user and role in user.roles %}checked{% endif %}
+                                               {% if user and user.username == 'admin' and role.name == 'admin' %}disabled{% endif %}>
+                                        <label class="form-check-label" for="role_{{ role.id }}">
+                                            <strong>{{ role.name }}</strong><br>
+                                            <small class="text-muted">{{ role.description }}</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden field to ensure admin role is kept for admin user -->
+                    {% if user and user.username == 'admin' %}
+                        {% for role in roles %}
+                            {% if role.name == 'admin' %}
+                                <input type="hidden" name="roles" value="{{ role.id }}">
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Opslaan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form validation
+    (function() {
+        'use strict';
+        
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            
+            Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    
+                    // Check if passwords match
+                    var password = document.getElementById('password');
+                    var passwordConfirm = document.getElementById('password_confirm');
+                    
+                    if (password.value !== '' && password.value !== passwordConfirm.value) {
+                        passwordConfirm.setCustomValidity('Wachtwoorden komen niet overeen');
+                        event.preventDefault();
+                    } else {
+                        passwordConfirm.setCustomValidity('');
+                    }
+                    
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}

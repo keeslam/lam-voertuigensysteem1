@@ -1,0 +1,124 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {% if expense %}
+        Kosten bewerken
+    {% else %}
+        Nieuwe kosten toevoegen
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h2 class="mb-0">
+                        {% if expense %}
+                            Kosten bewerken
+                        {% else %}
+                            Nieuwe kosten toevoegen
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="expense_type" class="form-label">Type kosten*</label>
+                            <select class="form-select" id="expense_type" name="expense_type" required>
+                                <option value="" {% if not expense %}selected{% endif %} disabled>Selecteer een type</option>
+                                <option value="onderhoud" {% if expense and expense.expense_type == 'onderhoud' %}selected{% endif %}>Onderhoud</option>
+                                <option value="reparatie" {% if expense and expense.expense_type == 'reparatie' %}selected{% endif %}>Reparatie</option>
+                                <option value="brandstof" {% if expense and expense.expense_type == 'brandstof' %}selected{% endif %}>Brandstof</option>
+                                <option value="verzekering" {% if expense and expense.expense_type == 'verzekering' %}selected{% endif %}>Verzekering</option>
+                                <option value="belasting" {% if expense and expense.expense_type == 'belasting' %}selected{% endif %}>Wegenbelasting</option>
+                                <option value="inspectie" {% if expense and expense.expense_type == 'inspectie' %}selected{% endif %}>APK/Inspectie</option>
+                                <option value="overig" {% if expense and expense.expense_type == 'overig' %}selected{% endif %}>Overig</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Selecteer een type kosten.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Bedrag (€)*</label>
+                            <div class="input-group">
+                                <span class="input-group-text">€</span>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="amount" 
+                                       name="amount"
+                                       step="0.01" 
+                                       min="0.01" 
+                                       value="{{ expense.amount if expense else '' }}" 
+                                       required>
+                                <div class="invalid-feedback">
+                                    Voer een geldig bedrag in (groter dan 0).
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="date" class="form-label">Datum*</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="date" 
+                                   name="date" 
+                                   value="{{ expense.date|date('%Y-%m-%d') if expense else current_date()|date('%Y-%m-%d') }}"
+                                   required>
+                            <div class="invalid-feedback">
+                                Selecteer een datum.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Beschrijving</label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="3">{{ expense.description if expense else '' }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <p class="text-muted"><small>* Verplichte velden</small></p>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('vehicle_expenses', vehicle_id=vehicle.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Terug
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Opslaan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form validation
+    (function() {
+        'use strict';
+        
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            
+            Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}

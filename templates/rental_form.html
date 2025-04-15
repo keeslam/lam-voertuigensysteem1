@@ -1,0 +1,149 @@
+{% extends 'layout.html' %}
+
+{% block title %}{% if rental %}Verhuring Bewerken{% else %}Nieuwe Verhuring{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>{% if rental %}Verhuring Bewerken{% else %}Nieuwe Verhuring{% endif %}</h2>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="vehicle_id" class="form-label">Voertuig *</label>
+                    <select class="form-select" id="vehicle_id" name="vehicle_id" required>
+                        <option value="">Selecteer een voertuig</option>
+                        {% for vehicle in vehicles %}
+                            <option value="{{ vehicle.id }}" 
+                                    {% if rental and rental.vehicle_id == vehicle.id %}selected{% endif %}
+                                    data-rate="{{ vehicle.daily_rate }}">
+                                {{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.license_plate }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="customer_id" class="form-label">Klant *</label>
+                    <select class="form-select" id="customer_id" name="customer_id" required>
+                        <option value="">Selecteer een klant</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}" 
+                                    {% if rental and rental.customer_id == customer.id %}selected{% endif %}>
+                                {{ customer.first_name }} {{ customer.last_name }} ({{ customer.email }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="start_date" class="form-label">Startdatum *</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" required
+                           value="{{ rental.start_date.strftime('%Y-%m-%d') if rental else '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="end_date" class="form-label">Einddatum *</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" required
+                           value="{{ rental.end_date.strftime('%Y-%m-%d') if rental else '' }}">
+                </div>
+            </div>
+            
+            {% if rental %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="status" class="form-label">Status *</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="active" {% if rental.status == 'active' %}selected{% endif %}>Actief</option>
+                        <option value="completed" {% if rental.status == 'completed' %}selected{% endif %}>Voltooid</option>
+                        <option value="cancelled" {% if rental.status == 'cancelled' %}selected{% endif %}>Geannuleerd</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="actual_return_date" class="form-label">Werkelijke Retourdatum</label>
+                    <input type="date" class="form-control" id="actual_return_date" name="actual_return_date"
+                           value="{{ rental.actual_return_date.strftime('%Y-%m-%d') if rental and rental.actual_return_date else '' }}">
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <label for="notes" class="form-label">Notities</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ rental.notes if rental else '' }}</textarea>
+                </div>
+            </div>
+            
+            <div class="card mb-3 bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">Verhuur Overzicht</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>Dagprijs:</strong> <span id="dailyRate">€0,00</span></p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Duur:</strong> <span id="rentalDays">0</span> dagen</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Geschatte Totaalprijs:</strong> <span id="totalCost">€0,00</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('rentals') }}" class="btn btn-secondary">Annuleren</a>
+                <button type="submit" class="btn btn-primary">
+                    Verhuring {% if rental %}Bijwerken{% else %}Aanmaken{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const vehicleSelect = document.getElementById('vehicle_id');
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+        const dailyRateSpan = document.getElementById('dailyRate');
+        const rentalDaysSpan = document.getElementById('rentalDays');
+        const totalCostSpan = document.getElementById('totalCost');
+        
+        function updateSummary() {
+            const selectedOption = vehicleSelect.options[vehicleSelect.selectedIndex];
+            let dailyRate = 0;
+            
+            if (selectedOption && selectedOption.value) {
+                dailyRate = parseFloat(selectedOption.dataset.rate);
+            }
+            
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            
+            let days = 0;
+            if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                // Add 1 to include the start day in the calculation
+                days = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+                if (days < 0) days = 0;
+            }
+            
+            const totalCost = days * dailyRate;
+            
+            dailyRateSpan.textContent = `€${dailyRate.toFixed(2)}`;
+            rentalDaysSpan.textContent = days;
+            totalCostSpan.textContent = `€${totalCost.toFixed(2)}`;
+        }
+        
+        vehicleSelect.addEventListener('change', updateSummary);
+        startDateInput.addEventListener('change', updateSummary);
+        endDateInput.addEventListener('change', updateSummary);
+        
+        // Initialize with any existing values
+        updateSummary();
+    });
+</script>
+{% endblock %}

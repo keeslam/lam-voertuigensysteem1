@@ -1,0 +1,132 @@
+{% extends 'layout.html' %}
+
+{% block title %}Klanten{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Klanten</h1>
+    <a href="{{ url_for('add_customer') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Klant Toevoegen
+    </a>
+</div>
+
+<!-- Search Box -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <label for="nameSearch" class="form-label">Zoeken op naam</label>
+                <input type="text" id="nameSearch" class="form-control" placeholder="Typ om te zoeken...">
+            </div>
+            <div class="col-md-6 mb-2">
+                <label for="emailSearch" class="form-label">Zoeken op e-mail</label>
+                <input type="text" id="emailSearch" class="form-control" placeholder="Typ om te zoeken...">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Table -->
+<div class="card">
+    <div class="card-body">
+        {% if customers %}
+        <div class="table-responsive">
+            <table class="table table-hover" id="customersTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Naam</th>
+                        <th>E-mail</th>
+                        <th>Telefoon</th>
+                        <th>Rijbewijs</th>
+                        <th>Acties</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>{{ customer.id }}</td>
+                        <td>{{ customer.first_name }} {{ customer.last_name }}</td>
+                        <td>{{ customer.email }}</td>
+                        <td>{{ customer.phone }}</td>
+                        <td>{{ customer.driver_license }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('edit_customer', id=customer.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal{{ customer.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Delete Confirmation Modal -->
+                    <div class="modal fade" id="deleteModal{{ customer.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Bevestig verwijderen</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Weet je zeker dat je deze klant wilt verwijderen?</p>
+                                    <p><strong>{{ customer.first_name }} {{ customer.last_name }}</strong></p>
+                                    <p class="text-danger"><small>Deze actie kan niet ongedaan gemaakt worden.</small></p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                                    <form action="{{ url_for('delete_customer', id=customer.id) }}" method="post">
+                                        <button type="submit" class="btn btn-danger">Verwijderen</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center py-4">Geen klanten gevonden. <a href="{{ url_for('add_customer') }}">Voeg een klant toe</a> om te beginnen.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search functionality
+        const nameSearch = document.getElementById('nameSearch');
+        const emailSearch = document.getElementById('emailSearch');
+        const table = document.getElementById('customersTable');
+        
+        function filterTable() {
+            const nameQuery = nameSearch.value.toLowerCase();
+            const emailQuery = emailSearch.value.toLowerCase();
+            
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            
+            rows.forEach(row => {
+                const name = row.cells[1].textContent.toLowerCase();
+                const email = row.cells[2].textContent.toLowerCase();
+                
+                const nameMatch = nameQuery === '' || name.includes(nameQuery);
+                const emailMatch = emailQuery === '' || email.includes(emailQuery);
+                
+                if (nameMatch && emailMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        nameSearch.addEventListener('input', filterTable);
+        emailSearch.addEventListener('input', filterTable);
+    });
+</script>
+{% endblock %}

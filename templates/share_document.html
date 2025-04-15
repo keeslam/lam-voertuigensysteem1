@@ -1,0 +1,134 @@
+{% extends 'layout.html' %}
+
+{% block title %}Document delen{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h2>Document delen</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Document informatie</h5>
+                        <div class="d-flex align-items-center mb-3">
+                            {% if document.is_image() %}
+                                <div class="me-3">
+                                    <img src="{{ url_for('download_document', document_id=document.id) }}" 
+                                         class="img-thumbnail" 
+                                         alt="{{ document.filename }}" 
+                                         style="max-height: 100px; max-width: 100px;">
+                                </div>
+                            {% elif document.is_pdf() %}
+                                <div class="me-3">
+                                    <i class="bi bi-file-earmark-pdf" style="font-size: 3rem; color: #dc3545;"></i>
+                                </div>
+                            {% else %}
+                                <div class="me-3">
+                                    <i class="bi bi-file-earmark" style="font-size: 3rem; color: #6c757d;"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div>
+                                <h6 class="mb-1">{{ document.filename }}</h6>
+                                <p class="mb-1"><span class="badge bg-secondary">{{ document.document_type }}</span></p>
+                                <small class="text-muted">Upload datum: {{ document.upload_date|date }}</small>
+                            </div>
+                        </div>
+                        
+                        {% if document.description %}
+                            <div class="mb-3">
+                                <strong>Beschrijving:</strong>
+                                <p>{{ document.description }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <strong>Voertuig:</strong>
+                            <p>{{ document.vehicle.make }} {{ document.vehicle.model }} ({{ document.vehicle.license_plate }})</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Deel opties</h5>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 
+                            Geef een e-mailadres op om een downloadlink te genereren die je kunt delen met de ontvanger.
+                        </div>
+                        
+                        <form method="post" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">E-mailadres ontvanger*</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="invalid-feedback">
+                                    Voer een geldig e-mailadres in
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('vehicle_documents', vehicle_id=document.vehicle_id) }}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Terug
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-share"></i> Deel document
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h5>Directe link</h5>
+                        <div class="input-group">
+                            <input type="text" class="form-control" 
+                                   value="{{ request.host_url }}documents/download/{{ document.id }}" 
+                                   id="direct-link" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyLink()">
+                                <i class="bi bi-clipboard"></i> Kopiëren
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            Deze directe link is publiek toegankelijk en kan worden gedeeld.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form validation
+    (function() {
+        'use strict';
+        
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            
+            Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+    
+    // Copy link function
+    function copyLink() {
+        var copyText = document.getElementById("direct-link");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        
+        // Show a temporary tooltip or alert that the link was copied
+        alert("Link gekopieerd naar klembord!");
+    }
+</script>
+{% endblock %}

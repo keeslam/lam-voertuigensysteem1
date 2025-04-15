@@ -1,0 +1,137 @@
+{% extends 'layout.html' %}
+
+{% block title %}Verhuringen{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Verhuringen</h1>
+    <a href="{{ url_for('add_rental') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Nieuwe Verhuring
+    </a>
+</div>
+
+<!-- Filter Options -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <label for="statusFilter" class="form-label">Status</label>
+                <select id="statusFilter" class="form-select">
+                    <option value="">Alle</option>
+                    <option value="active">Actief</option>
+                    <option value="completed">Voltooid</option>
+                    <option value="cancelled">Geannuleerd</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-2">
+                <label for="customerFilter" class="form-label">Klantnaam</label>
+                <input type="text" id="customerFilter" class="form-control" placeholder="Zoeken op klant...">
+            </div>
+            <div class="col-md-4 mb-2">
+                <label for="vehicleFilter" class="form-label">Voertuig</label>
+                <input type="text" id="vehicleFilter" class="form-control" placeholder="Zoeken op voertuig...">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rentals Table -->
+<div class="card">
+    <div class="card-body">
+        {% if rentals %}
+        <div class="table-responsive">
+            <table class="table table-hover" id="rentalsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Klant</th>
+                        <th>Voertuig</th>
+                        <th>Startdatum</th>
+                        <th>Einddatum</th>
+                        <th>Status</th>
+                        <th>Kosten</th>
+                        <th>Acties</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rental in rentals %}
+                    <tr>
+                        <td>{{ rental.id }}</td>
+                        <td>{{ rental.customer.full_name }}</td>
+                        <td>{{ rental.vehicle.make }} {{ rental.vehicle.model }} ({{ rental.vehicle.license_plate }})</td>
+                        <td>{{ rental.start_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ rental.end_date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <span class="badge {% if rental.status == 'active' %}bg-success{% elif rental.status == 'completed' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                {% if rental.status == 'active' %}Actief
+                                {% elif rental.status == 'completed' %}Voltooid
+                                {% elif rental.status == 'cancelled' %}Geannuleerd
+                                {% else %}{{ rental.status }}{% endif %}
+                            </span>
+                        </td>
+                        <td>€{{ "%.2f"|format(rental.total_cost) }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('edit_rental', id=rental.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if rental.status == 'active' %}
+                                <form action="{{ url_for('return_rental', id=rental.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Voertuig retourneren">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center py-4">Geen verhuringen gevonden. <a href="{{ url_for('add_rental') }}">Maak een verhuring aan</a> om te beginnen.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter functionality
+        const statusFilter = document.getElementById('statusFilter');
+        const customerFilter = document.getElementById('customerFilter');
+        const vehicleFilter = document.getElementById('vehicleFilter');
+        const table = document.getElementById('rentalsTable');
+        
+        function applyFilters() {
+            const status = statusFilter.value.toLowerCase();
+            const customer = customerFilter.value.toLowerCase();
+            const vehicle = vehicleFilter.value.toLowerCase();
+            
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            
+            rows.forEach(row => {
+                const rowStatus = row.cells[5].textContent.trim().toLowerCase();
+                const rowCustomer = row.cells[1].textContent.trim().toLowerCase();
+                const rowVehicle = row.cells[2].textContent.trim().toLowerCase();
+                
+                const statusMatch = status === '' || rowStatus.includes(status);
+                const customerMatch = customer === '' || rowCustomer.includes(customer);
+                const vehicleMatch = vehicle === '' || rowVehicle.includes(vehicle);
+                
+                if (statusMatch && customerMatch && vehicleMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        statusFilter.addEventListener('change', applyFilters);
+        customerFilter.addEventListener('input', applyFilters);
+        vehicleFilter.addEventListener('input', applyFilters);
+    });
+</script>
+{% endblock %}

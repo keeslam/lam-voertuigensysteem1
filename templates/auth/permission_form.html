@@ -1,0 +1,94 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {% if permission %}
+        Permissie bewerken
+    {% else %}
+        Nieuwe permissie
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            {% if permission %}
+                Permissie bewerken
+            {% else %}
+                Nieuwe permissie
+            {% endif %}
+        </h1>
+        <a href="{{ url_for('auth.permissions') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Terug naar permissies
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                <div class="mb-3">
+                    <label for="name" class="form-label">Naam*</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="name" 
+                           name="name" 
+                           value="{{ permission.name if permission else '' }}"
+                           required>
+                    <div class="invalid-feedback">Naam is verplicht</div>
+                    <div class="form-text">
+                        Gebruik een beschrijvende naam, bijvoorbeeld 'manage_vehicles' of 'view_reports'
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Beschrijving</label>
+                    <textarea class="form-control" 
+                              id="description" 
+                              name="description" 
+                              rows="3">{{ permission.description if permission else '' }}</textarea>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Opslaan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form validation
+    (function() {
+        'use strict';
+        
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            
+            Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,201 @@
+{% extends 'layout.html' %}
+
+{% block title %}Rapporten{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Rapporten & Analyse</h1>
+
+<div class="row">
+    <!-- Vehicle Status Report -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Voertuigstatus</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="vehicleStatusChart"></canvas>
+                {% if vehicle_status %}
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Aantal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for status in vehicle_status %}
+                            <tr>
+                                <td>
+                                    {% if status.status == 'available' %}Beschikbaar
+                                    {% elif status.status == 'rented' %}Verhuurd
+                                    {% elif status.status == 'maintenance' %}Onderhoud
+                                    {% else %}{{ status.status }}{% endif %}
+                                </td>
+                                <td>{{ status.count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center py-4">Geen voertuiggegevens beschikbaar</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Customer Rentals Report -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Actieve Verhuringen per Klant</h5>
+            </div>
+            <div class="card-body">
+                {% if customer_rentals %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Klant</th>
+                                <th>Actieve Verhuringen</th>
+                                <th>Actie</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customer_rentals %}
+                            <tr>
+                                <td>{{ customer.first_name }} {{ customer.last_name }}</td>
+                                <td>{{ customer.rental_count }}</td>
+                                <td>
+                                    <a href="{{ url_for('edit_customer', id=customer.id) }}" class="btn btn-sm btn-outline-primary">
+                                        Details Bekijken
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center py-4">Geen actieve verhuringsgegevens beschikbaar</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Revenue Report -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Omzet per Maand</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart"></canvas>
+                {% if revenue_by_month %}
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Maand</th>
+                                <th>Omzet</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for month in revenue_by_month %}
+                            <tr>
+                                <td>{{ month.month }}</td>
+                                <td>€{{ "%.2f"|format(month.revenue) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center py-4">Geen omzetgegevens beschikbaar</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vehicle Status Chart
+        {% if vehicle_status %}
+        const vehicleStatusCtx = document.getElementById('vehicleStatusChart').getContext('2d');
+        const statusLabels = [{% for status in vehicle_status %}'{{ status.status }}',{% endfor %}];
+        const statusData = [{% for status in vehicle_status %}{{ status.count }},{% endfor %}];
+        const statusColors = ['#28a745', '#ffc107', '#6c757d'];  // green for available, yellow for rented, gray for maintenance
+        
+        new Chart(vehicleStatusCtx, {
+            type: 'pie',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusData,
+                    backgroundColor: statusColors
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Voertuigstatus Verdeling'
+                    }
+                }
+            }
+        });
+        {% endif %}
+        
+        // Revenue Chart
+        {% if revenue_by_month %}
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const monthLabels = [{% for month in revenue_by_month %}'{{ month.month }}',{% endfor %}];
+        const revenueData = [{% for month in revenue_by_month %}{{ month.revenue }},{% endfor %}];
+        
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Omzet',
+                    data: revenueData,
+                    backgroundColor: 'rgba(40, 167, 69, 0.6)',
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '€' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Maandelijkse Omzet'
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

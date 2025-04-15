@@ -1,0 +1,268 @@
+{% extends 'layout.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Dashboard</h1>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Totaal Voertuigen</h5>
+                <h2 class="display-4">{{ vehicle_count }}</h2>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="text-white text-decoration-none" href="{{ url_for('vehicles') }}">Details Bekijken</a>
+                <i class="fas fa-car"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Beschikbare Voertuigen</h5>
+                <h2 class="display-4">{{ available_vehicles }}</h2>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="text-white text-decoration-none" href="{{ url_for('vehicles') }}">Details Bekijken</a>
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <h5 class="card-title">Totaal Klanten</h5>
+                <h2 class="display-4">{{ customer_count }}</h2>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="text-white text-decoration-none" href="{{ url_for('customers') }}">Details Bekijken</a>
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-dark h-100">
+            <div class="card-body">
+                <h5 class="card-title">Actieve Verhuringen</h5>
+                <h2 class="display-4">{{ active_rentals }}</h2>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="text-dark text-decoration-none" href="{{ url_for('rentals') }}">Details Bekijken</a>
+                <i class="fas fa-key"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Rentals -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recente Verhuringen</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_rentals %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Klant</th>
+                                    <th>Voertuig</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rental in recent_rentals %}
+                                <tr>
+                                    <td>{{ rental.id }}</td>
+                                    <td>{{ rental.customer.full_name }}</td>
+                                    <td>{{ rental.vehicle.make }} {{ rental.vehicle.model }}</td>
+                                    <td>
+                                        <span class="badge {% if rental.status == 'active' %}bg-success{% elif rental.status == 'completed' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                            {% if rental.status == 'active' %}Actief{% elif rental.status == 'completed' %}Voltooid{% else %}{{rental.status}}{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">Geen recente verhuringen gevonden</p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('rentals') }}" class="btn btn-sm btn-outline-primary">Alle Verhuringen Bekijken</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Due Today & Overdue -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Vandaag Terug</h5>
+            </div>
+            <div class="card-body">
+                {% if due_today %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Klant</th>
+                                    <th>Voertuig</th>
+                                    <th>Actie</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rental in due_today %}
+                                <tr>
+                                    <td>{{ rental.id }}</td>
+                                    <td>{{ rental.customer.full_name }}</td>
+                                    <td>{{ rental.vehicle.license_plate }}</td>
+                                    <td>
+                                        <form action="{{ url_for('return_rental', id=rental.id) }}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success">Retourneren</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">Geen verhuringen vandaag terug te verwachten</p>
+                {% endif %}
+            </div>
+        </div>
+    
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>Te Late Verhuringen</h5>
+            </div>
+            <div class="card-body">
+                {% if overdue %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Klant</th>
+                                    <th>Voertuig</th>
+                                    <th>Status</th>
+                                    <th>Actie</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rental in overdue %}
+                                <tr>
+                                    <td>{{ rental.id }}</td>
+                                    <td>{{ rental.customer.full_name }}</td>
+                                    <td>{{ rental.vehicle.license_plate }}</td>
+                                    <td class="text-danger">
+                                        Te Laat
+                                    </td>
+                                    <td>
+                                        <form action="{{ url_for('return_rental', id=rental.id) }}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success">Retourneren</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">Geen te late verhuringen</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vehicle Expenses -->
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Recente Kosten</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_expenses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Datum</th>
+                                    <th>Voertuig</th>
+                                    <th>Type</th>
+                                    <th>Bedrag</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in recent_expenses %}
+                                <tr>
+                                    <td>{{ expense.date|date }}</td>
+                                    <td>{{ expense.vehicle.license_plate }}</td>
+                                    <td>{{ expense.expense_type }}</td>
+                                    <td>€{{ expense.amount }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">Geen recente kosten gevonden</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Kosten per Type</h5>
+            </div>
+            <div class="card-body">
+                {% if expenses_by_type %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Type Kosten</th>
+                                    <th>Totaal Bedrag</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense_type in expenses_by_type %}
+                                <tr>
+                                    <td>{{ expense_type.expense_type }}</td>
+                                    <td>€{{ expense_type.total }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-secondary">
+                                    <td><strong>Totaal</strong></td>
+                                    <td><strong>€{{ expenses_by_type|sum(attribute='total') }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">Geen kostengegevens beschikbaar</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
